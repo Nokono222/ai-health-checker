@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Noto_Sans_JP } from "next/font/google";
 import { AuthProvider } from "@/context/AuthContext";
+import { BackendWarmup } from "@/components/BackendWarmup";
 import { cn } from "@/lib/utils";
 import "./globals.css";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ja" className={cn(notoSansJP.variable)}>
       <body>
+        <BackendWarmup />
         <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
