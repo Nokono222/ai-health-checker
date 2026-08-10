@@ -1,5 +1,6 @@
 from unittest.mock import MagicMock
 
+import anthropic
 import pytest
 
 from ai_health_checker.services import llm_service
@@ -25,7 +26,7 @@ class TestGenerateAnalysisReport:
     ) -> None:
         mock_client = _make_mock_client(["疲労度と残業時間に強い相関があります。"])
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         result = llm_service.generate_analysis_report(
@@ -39,7 +40,7 @@ class TestGenerateAnalysisReport:
     ) -> None:
         mock_client = _make_mock_client(["ok"])
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         llm_service.generate_analysis_report("プロンプト", TEST_USER_ID)
@@ -54,7 +55,7 @@ class TestGenerateAnalysisReport:
     ) -> None:
         mock_client = _make_mock_client(["ok"])
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         llm_service.generate_analysis_report("プロンプト", TEST_USER_ID, "fatigue")
@@ -68,7 +69,7 @@ class TestGenerateAnalysisReport:
     ) -> None:
         mock_client = _make_mock_client(["ok"])
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         llm_service.generate_analysis_report("プロンプト", TEST_USER_ID)
@@ -81,7 +82,7 @@ class TestGenerateAnalysisReport:
     ) -> None:
         mock_client = _make_mock_client(["ok"])
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         llm_service.generate_analysis_report("プロンプト", TEST_USER_ID, "unknown")
@@ -94,7 +95,7 @@ class TestGenerateAnalysisReport:
     ) -> None:
         mock_client = _make_mock_client(["前半。", "後半。"])
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         result = llm_service.generate_analysis_report("プロンプト", TEST_USER_ID)
@@ -115,7 +116,7 @@ class TestGenerateAnalysisReport:
             text_block,
         ]
         monkeypatch.setattr(
-            llm_service.anthropic, "Anthropic", MagicMock(return_value=mock_client)
+            anthropic, "Anthropic", MagicMock(return_value=mock_client)
         )
 
         result = llm_service.generate_analysis_report("プロンプト", TEST_USER_ID)

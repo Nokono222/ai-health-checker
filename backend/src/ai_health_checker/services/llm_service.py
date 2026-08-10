@@ -1,5 +1,3 @@
-import anthropic
-
 _MODEL = "claude-haiku-4-5"
 
 # 分析の切り口ごとのレポート観点（#107）
@@ -42,6 +40,11 @@ def generate_analysis_report(
     focus に応じてレポートの観点を切り替える（未知の値は総合にフォールバック）。
     APIキーは環境変数 ANTHROPIC_API_KEY から解決される。
     """
+    # anthropic の import はバックエンド全体の import コストの大半を占めるため、
+    # AI 分析を実行するときだけ読み込む。ログ取得など他のエンドポイントの
+    # コールドスタートからこのコストを外すのが目的（#125）
+    import anthropic
+
     instructions = _FOCUS_INSTRUCTIONS.get(focus, _FOCUS_INSTRUCTIONS["general"])
     client = anthropic.Anthropic()
     response = client.messages.create(

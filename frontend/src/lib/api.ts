@@ -8,6 +8,22 @@ export { DuplicateDateError, NoLogsError };
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
+export type WarmUpFetch = (url: string) => Promise<unknown>;
+
+const defaultWarmUpFetch: WarmUpFetch = (url) => fetch(url, { cache: "no-store" });
+
+/**
+ * バックエンド（Cloud Run）のコールドスタートを先に始めさせる（#125）。
+ * 認証の解決を待たずに発火させることで、Firebase Auth の復元と
+ * コールドスタートが直列ではなく並列になる。
+ * 認証不要の /health を使い、結果は使わないので失敗は無視する。
+ */
+export function warmUpBackend(fetcher: WarmUpFetch = defaultWarmUpFetch): void {
+  void Promise.resolve()
+    .then(() => fetcher(`${BACKEND_URL}/health`))
+    .catch(() => undefined);
+}
+
 async function getToken(): Promise<string> {
   if (!auth.currentUser) throw new Error("Not authenticated");
   return getIdToken(auth.currentUser);
