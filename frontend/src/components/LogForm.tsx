@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/context/AuthContext";
 import { useLogForm, LogFormValues } from "@/hooks/useLogForm";
 import {
   DuplicateGuardApi,
@@ -32,6 +33,10 @@ const logsApi: LogsApi = { listLogs };
 
 export function LogForm({ existingLog }: Props) {
   const router = useRouter();
+  // 新規記録は認証の解決を待たずに描画されるため（#125）、サーバーを叩く処理は
+  // 認証が済むまで止める。フォームの入力自体はその間も自由に行える
+  const { user } = useAuth();
+  const authenticated = user !== null;
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -64,7 +69,7 @@ export function LogForm({ existingLog }: Props) {
   // 新規記録時のみ、選択中の日付に既存ログがあれば編集画面へ誘導する
   const existingLogIdForDate = useDuplicateDateGuard(
     fields.date,
-    !existingLog,
+    !existingLog && authenticated,
     duplicateGuardApi
   );
 
@@ -75,7 +80,7 @@ export function LogForm({ existingLog }: Props) {
   const canCopyPrevious = !existingLog || isIncompleteLog;
   const previousLog = usePreviousWorkdayLog(
     fields.date,
-    canCopyPrevious && !fields.is_holiday && !fields.morning_only,
+    canCopyPrevious && !fields.is_holiday && !fields.morning_only && authenticated,
     logsApi
   );
 
@@ -361,16 +366,18 @@ export function LogForm({ existingLog }: Props) {
         {/* Submit */}
         <button
           type="submit"
-          disabled={submitting || !!existingLogIdForDate}
+          disabled={submitting || !!existingLogIdForDate || !authenticated}
           className="mt-1 w-full cursor-pointer rounded-xl bg-primary py-3.5 text-base font-semibold text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-50"
         >
           {submitting
             ? "保存中..."
-            : existingLog
-              ? "保存する"
-              : fields.morning_only
-                ? "朝の分を記録する"
-                : "記録する"}
+            : !authenticated
+              ? "準備中..."
+              : existingLog
+                ? "保存する"
+                : fields.morning_only
+                  ? "朝の分を記録する"
+                  : "記録する"}
         </button>
       </form>
 
