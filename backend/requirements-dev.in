@@ -1,0 +1,14 @@
+# 開発・CI 用。本番イメージには入れない（#125）
+-r requirements.in
+
+# 移行スクリプト（migrate_excel.py）専用。本番のリクエスト経路では使わない
+pandas
+pandas-stubs
+openpyxl
+
+# 開発ツール
+ruff
+black
+mypy
+pytest
+pytest-cov

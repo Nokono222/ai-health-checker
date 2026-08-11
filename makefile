@@ -20,8 +20,9 @@ $(VENV_SCRIPTS)/activate:
 	$(PYTHON) -m venv $(VENV)
 
 # requirementsが更新されたらpip installだけ実行
-$(STAMP): backend/requirements.txt $(VENV_SCRIPTS)/activate
-	$(PIP) install -r backend/requirements.txt
+# ローカルは開発ツール・移行スクリプトも要るので dev 側を入れる（本番は requirements.txt のみ）
+$(STAMP): backend/requirements-dev.txt $(VENV_SCRIPTS)/activate
+	$(PIP) install -r backend/requirements-dev.txt
 	$(VENV_PYTHON) -c "open('$(STAMP)', 'w').close()"
 
 venv: $(STAMP)
@@ -47,17 +48,19 @@ stop:
 	done
 	@echo "done"
 
-# requirements.txtを更新(ロック更新)
+# requirements.txtを更新(ロック更新)。本番用と開発用の両方を再生成する
 compile:
 	$(VENV_SCRIPTS)/pip-compile backend/requirements.in --output-file backend/requirements.txt
+	$(VENV_SCRIPTS)/pip-compile backend/requirements-dev.in --output-file backend/requirements-dev.txt
 
-# requirements.txtに従ってpip install(環境同期)
+# requirements-dev.txtに従ってpip install(環境同期)
 sync:
-	$(VENV_SCRIPTS)/pip-sync backend/requirements.txt
+	$(VENV_SCRIPTS)/pip-sync backend/requirements-dev.txt
 
 # requirements.txtを更新し、pip install
 upgrade:
 	$(VENV_SCRIPTS)/pip-compile --upgrade backend/requirements.in --output-file backend/requirements.txt
+	$(VENV_SCRIPTS)/pip-compile --upgrade backend/requirements-dev.in --output-file backend/requirements-dev.txt
 
 lint: venv
 	$(VENV_PYTHON) -m ruff check backend/src/
