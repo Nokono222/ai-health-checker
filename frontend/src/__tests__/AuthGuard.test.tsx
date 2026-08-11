@@ -50,6 +50,18 @@ describe("AuthGuard", () => {
     expect(mockReplace).not.toHaveBeenCalled();
   });
 
+  it("should render children immediately while auth is resolving when renderWhileResolving is set", () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: true });
+
+    render(
+      <AuthGuard renderWhileResolving>
+        <p>{PROTECTED_TEXT}</p>
+      </AuthGuard>
+    );
+
+    expect(screen.getByText(PROTECTED_TEXT)).toBeDefined();
+  });
+
   it("should redirect to the login page when the user is not authenticated", () => {
     mockUseAuth.mockReturnValue({ user: null, loading: false });
 
