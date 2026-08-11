@@ -10,7 +10,7 @@ import {
 } from "@/hooks/useDuplicateDateGuard";
 import { usePreviousWorkdayLog } from "@/hooks/usePreviousWorkdayLog";
 import { createLog, updateLog, deleteLog, listLogs, DuplicateDateError, LogRecord } from "@/lib/api";
-import { invalidateLogs, LogsApi } from "@/hooks/useLogs";
+import { useInvalidateLogs, LogsApi } from "@/hooks/useLogs";
 import { ColoredSlider } from "@/components/ui/colored-slider";
 import { Card } from "@/components/ui/card";
 import { ConfirmSheet } from "@/components/ui/confirm-sheet";
@@ -36,6 +36,7 @@ export function LogForm({ existingLog }: Props) {
   // 新規記録は認証の解決を待たずに描画されるため（#125）、サーバーを叩く処理は
   // 認証が済むまで止める。フォームの入力自体はその間も自由に行える
   const { user } = useAuth();
+  const invalidateLogs = useInvalidateLogs();
   const authenticated = user !== null;
   const [submitting, setSubmitting] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
-import { renderHook, waitFor } from "@testing-library/react";
-import { useLogs, LogsApi } from "@/hooks/useLogs";
+import { act, renderHook, waitFor } from "@testing-library/react";
+import { useLogs, useInvalidateLogs, LogsApi } from "@/hooks/useLogs";
 import { swrWrapper } from "./helpers/swr";
 import { makeLogRecord } from "./helpers/logs";
 
@@ -45,5 +45,28 @@ describe("useLogs", () => {
       expect(result.current.error).toBe("ログの取得に失敗しました")
     );
     expect(result.current.logs).toEqual([]);
+  });
+});
+
+describe("useInvalidateLogs", () => {
+  // swrWrapper はカスタムキャッシュプロバイダを使う。swr から直接 import する
+  // グローバル mutate は既定キャッシュに束縛されているため、ここでは効かない（#125）
+  it("should refetch logs under a custom cache provider", async () => {
+    const log = makeLogRecord("2026-07-01");
+    const api: LogsApi = { listLogs: vi.fn().mockResolvedValue([log]) };
+
+    const { result } = renderHook(
+      () => ({ logs: useLogs(undefined, api), invalidate: useInvalidateLogs() }),
+      { wrapper: swrWrapper }
+    );
+
+    await waitFor(() => expect(result.current.logs.loading).toBe(false));
+    expect(api.listLogs).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      await result.current.invalidate();
+    });
+
+    expect(api.listLogs).toHaveBeenCalledTimes(2);
   });
 });
