@@ -1,6 +1,7 @@
 "use client";
 
-import useSWR, { mutate } from "swr";
+import { useCallback } from "react";
+import useSWR, { useSWRConfig } from "swr";
 import type { LogListParams, LogRecord } from "@/lib/api";
 
 export type LogsApi = {
@@ -40,7 +41,18 @@ export function useLogs(
   };
 }
 
-/** ログの作成・更新・削除後に全期間のログキャッシュを無効化し再取得させる */
-export function invalidateLogs(): Promise<unknown> {
-  return mutate((key) => Array.isArray(key) && key[0] === LOGS_KEY_PREFIX);
+/**
+ * ログの作成・更新・削除後に全期間のログキャッシュを無効化し再取得させる。
+ *
+ * swr から直接 import するグローバル mutate は既定キャッシュに束縛されており、
+ * カスタムキャッシュプロバイダ（#125 C-3 の localStorage 永続化）配下では
+ * 別のキャッシュを触ってしまい無効化が効かない。必ず useSWRConfig() の
+ * mutate を使うこと。
+ */
+export function useInvalidateLogs(): () => Promise<unknown> {
+  const { mutate } = useSWRConfig();
+  return useCallback(
+    () => mutate((key) => Array.isArray(key) && key[0] === LOGS_KEY_PREFIX),
+    [mutate]
+  );
 }
