@@ -113,7 +113,7 @@ E2E テストはエミュレータ + ローカル backend/frontend を自動起�
 
 | 対象 | ホスティング | URL | トリガー |
 |---|---|---|---|
-| フロントエンド | Firebase App Hosting（asia-east1） | https://ai-health-checker.shunniehub.com （デフォルトURL: https://ai-health-checker--ai-health-checker-stg.asia-east1.hosted.app ） | main への push（`frontend/` を含むコミットで自動ロールアウト） |
+| フロントエンド | Firebase App Hosting（asia-east1） | https://ai-health-checker.nokono.net （旧ドメイン https://ai-health-checker.shunniehub.com は 2027 年に閉鎖予定 / デフォルトURL: https://ai-health-checker--ai-health-checker-stg.asia-east1.hosted.app ） | main への push（`frontend/` を含むコミットで自動ロールアウト） |
 | バックエンド | Cloud Run（asia-northeast1） | https://ai-health-checker-api-yoieoj4i7a-an.a.run.app | main への push（`backend/**`）or `deploy-backend.yml` の手動実行 |
 | Firestore rules | Firebase | — | main への push（`deploy-staging.yml`） |
 
