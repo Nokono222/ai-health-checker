@@ -45,7 +45,8 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           # --set-env-vars はプレーン環境変数を全置換するため、--clear-env-vars と同様に
           # 古い変数の残留を防げる（両フラグは併用不可）。^;^ は値内カンマのための区切り文字指定
+          # 旧ドメイン shunniehub.com は 2027 年の閉鎖まで移行期間として許可する
           flags: >-
             --port=8080 --allow-unauthenticated
-            --set-env-vars=^;^CORS_ALLOWED_ORIGINS=https://ai-health-checker.shunniehub.com,https://ai-health-checker--ai-health-checker-stg.asia-east1.hosted.app,http://localhost:3000
+            --set-env-vars=^;^CORS_ALLOWED_ORIGINS=https://ai-health-checker.nokono.net,https://ai-health-checker.shunniehub.com,https://ai-health-checker--ai-health-checker-stg.asia-east1.hosted.app,http://localhost:3000
             --set-secrets=ANTHROPIC_API_KEY=ANTHROPIC_API_KEY:latest,SCHEDULER_API_KEY=SCHEDULER_API_KEY:latest,SMTP_HOST=SMTP_HOST:latest,SMTP_PORT=SMTP_PORT:latest,SMTP_USER=SMTP_USER:latest,SMTP_PASSWORD=SMTP_PASSWORD:latest,EMAIL_FROM=EMAIL_FROM:latest
