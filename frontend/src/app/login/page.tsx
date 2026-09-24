@@ -54,7 +54,7 @@ export default function LoginPage() {
       </button>
 
       <footer className="absolute bottom-6 text-xs text-fg-muted">
-        © 2026 Shunnie816
+        © 2026 Nokono222
       </footer>
     </main>
   );
