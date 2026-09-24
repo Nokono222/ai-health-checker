@@ -154,4 +154,4 @@ AI 分析は Anthropic Claude API（claude-haiku-4-5）を使用する。従量�
 
 ## ライセンス
 
-[MIT License](LICENSE) — Copyright (c) 2026 Shunnie816
+[MIT License](LICENSE) — Copyright (c) 2026 Nokono222
