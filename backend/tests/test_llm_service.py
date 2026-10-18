@@ -122,3 +122,77 @@ class TestGenerateAnalysisReport:
         result = llm_service.generate_analysis_report("プロンプト", TEST_USER_ID)
 
         assert result == "本文"
+
+
+FEDERATION_ENV = {
+    "ANTHROPIC_FEDERATION_RULE_ID": "fdrl_test",
+    "ANTHROPIC_ORGANIZATION_ID": "org-test",
+    "ANTHROPIC_SERVICE_ACCOUNT_ID": "svac_test",
+    "ANTHROPIC_WORKSPACE_ID": "wrkspc_test",
+}
+
+
+class TestCreateClient:
+    @pytest.fixture(autouse=True)
+    def _clean_env(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for name in ("ANTHROPIC_API_KEY", *FEDERATION_ENV):
+            monkeypatch.delenv(name, raising=False)
+
+    def test_should_use_default_client_when_no_federation_configured(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        client_factory = MagicMock()
+        monkeypatch.setattr(anthropic, "Anthropic", client_factory)
+
+        llm_service._create_client()
+
+        client_factory.assert_called_once_with()
+
+    def test_should_prefer_api_key_over_federation(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+        for name, value in FEDERATION_ENV.items():
+            monkeypatch.setenv(name, value)
+        client_factory = MagicMock()
+        monkeypatch.setattr(anthropic, "Anthropic", client_factory)
+
+        llm_service._create_client()
+
+        client_factory.assert_called_once_with()
+
+    def test_should_use_workload_identity_when_federation_configured(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        for name, value in FEDERATION_ENV.items():
+            monkeypatch.setenv(name, value)
+        client_factory = MagicMock()
+        credentials_factory = MagicMock()
+        monkeypatch.setattr(anthropic, "Anthropic", client_factory)
+        monkeypatch.setattr(
+            anthropic, "WorkloadIdentityCredentials", credentials_factory
+        )
+
+        llm_service._create_client()
+
+        credentials_kwargs = credentials_factory.call_args.kwargs
+        assert credentials_kwargs["federation_rule_id"] == "fdrl_test"
+        assert credentials_kwargs["organization_id"] == "org-test"
+        assert credentials_kwargs["service_account_id"] == "svac_test"
+        assert credentials_kwargs["workspace_id"] == "wrkspc_test"
+        client_factory.assert_called_once_with(
+            credentials=credentials_factory.return_value
+        )
+
+    def test_should_fetch_identity_token_for_anthropic_audience(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        fetch_id_token = MagicMock(return_value="google-jwt")
+        monkeypatch.setattr(
+            "google.oauth2.id_token.fetch_id_token", fetch_id_token
+        )
+
+        token = llm_service._fetch_google_identity_token()
+
+        assert token == "google-jwt"
+        assert fetch_id_token.call_args.args[1] == "https://api.anthropic.com"
