@@ -1,4 +1,13 @@
+import os
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import anthropic
+
 _MODEL = "claude-haiku-4-5"
+
+# フェデレーションルールの audience と一致させる JWT の aud
+_FEDERATION_AUDIENCE = "https://api.anthropic.com"
 
 # 分析の切り口ごとのレポート観点（#107）
 _FOCUS_INSTRUCTIONS: dict[str, str] = {
@@ -32,21 +41,54 @@ _SYSTEM_PROMPT_TEMPLATE = """\
 - 全体で400字程度に収める"""
 
 
-def generate_analysis_report(
-    prompt: str, user_id: str, focus: str = "general"
-) -> str:
-    """ログを整形したプロンプトから分析レポート本文を生成する。
+def _fetch_google_identity_token() -> str:
+    """Cloud Run のメタデータサーバーから Google 署名の ID トークンを取得する。"""
+    import google.auth.transport.requests
+    import google.oauth2.id_token
 
-    focus に応じてレポートの観点を切り替える（未知の値は総合にフォールバック）。
-    APIキーは環境変数 ANTHROPIC_API_KEY から解決される。
+    return str(
+        google.oauth2.id_token.fetch_id_token(  # type: ignore[no-untyped-call]
+            google.auth.transport.requests.Request(), _FEDERATION_AUDIENCE
+        )
+    )
+
+
+def _create_client() -> "anthropic.Anthropic":
+    """認証方式を環境変数から選んで Anthropic クライアントを作る（#136）。
+
+    ANTHROPIC_API_KEY があれば API キーを優先する（ローカル開発・移行期間用）。
+    キーがなく ANTHROPIC_FEDERATION_RULE_ID があれば Workload Identity Federation
+    で認証する。どちらも無い場合は SDK 既定の解決に任せる。
     """
     # anthropic の import はバックエンド全体の import コストの大半を占めるため、
     # AI 分析を実行するときだけ読み込む。ログ取得など他のエンドポイントの
     # コールドスタートからこのコストを外すのが目的（#125）
     import anthropic
 
+    rule_id = os.environ.get("ANTHROPIC_FEDERATION_RULE_ID")
+    if os.environ.get("ANTHROPIC_API_KEY") or not rule_id:
+        return anthropic.Anthropic()
+    return anthropic.Anthropic(
+        credentials=anthropic.WorkloadIdentityCredentials(
+            identity_token_provider=_fetch_google_identity_token,
+            federation_rule_id=rule_id,
+            organization_id=os.environ["ANTHROPIC_ORGANIZATION_ID"],
+            service_account_id=os.environ["ANTHROPIC_SERVICE_ACCOUNT_ID"],
+            workspace_id=os.environ.get("ANTHROPIC_WORKSPACE_ID"),
+        )
+    )
+
+
+def generate_analysis_report(
+    prompt: str, user_id: str, focus: str = "general"
+) -> str:
+    """ログを整形したプロンプトから分析レポート本文を生成する。
+
+    focus に応じてレポートの観点を切り替える（未知の値は総合にフォールバック）。
+    認証方式（API キー / Workload Identity Federation）は _create_client が解決する。
+    """
     instructions = _FOCUS_INSTRUCTIONS.get(focus, _FOCUS_INSTRUCTIONS["general"])
-    client = anthropic.Anthropic()
+    client = _create_client()
     response = client.messages.create(
         model=_MODEL,
         max_tokens=2048,
