@@ -104,7 +104,7 @@ make clean       # venv 削除
 `.env` ファイルに以下を設定：
 
 ```
-ANTHROPIC_API_KEY=  # Anthropic APIキー（AI 分析レポート生成用）
+ANTHROPIC_API_KEY=  # Anthropic APIキー（ローカル開発用。本番 Cloud Run は Workload Identity Federation で認証し、キーは設定しない）
 SCHEDULER_API_KEY=  # Cloud Scheduler トリガー認証用の共有シークレット
 SMTP_HOST=          # レポート完了メール送信用（未設定の場合は送信をスキップ）
 SMTP_PORT=          # 未設定時は 587
